@@ -2,6 +2,15 @@
     #include <stdio.h>
     #include <string.h>
     #include "parser.tab.h"
+
+// Function to remove quotes from strings
+    void removeQuotes(char* str, char* new_str) {
+        int len = strlen(str);
+
+        strncpy(new_str, str + 1, len - 2);
+
+        new_str[len - 2] = '\0';
+    }
 %}
 
 %option noyywrap
@@ -13,7 +22,6 @@ CARACTER            (?i:car)
 BOOLEANO            (?i:bool)
 ENTERO              (?i:ent)
 FLOTANTE            (?i:flot)
-DOBLE               (?i:doble)
 CADENA              (?i:cadena)
 VACIO               (?i:vacio)
 FUNCION             (?i:func)
@@ -31,21 +39,17 @@ EN                  (?i:en)
 REGRESA             (?i:regresa)
 
 /* Identifier definition */
-
 IDENTIFIER          [a-zA-Z][a-zA-Z0-9_]*
 
 /* Number constant definition */
-
 INTEGER             [0-9]+
-REAL                [0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?
+REAL                [0-9]+(\.[0-9]+)([eE][+-]?[0-9]+)?
 
 /* String literal definitions */
-
 CHARACTER           \'([^\n]|\\\n)\'
 STRING              \"([^\n]|\\\n)*\"
 
 /* Comment definitions */
-
 SINGLE_LINE         \#[^*].*
 MULTI_LINE          \#\*([^*]|\*+[^*#])*\*+\#
 
@@ -54,73 +58,72 @@ WHITESPACE          [\ \f\r\n\t\v]+
 
 %%
 
-{SINGLE_LINE}       { }
-{MULTI_LINE}        { }
+{SINGLE_LINE}       { /* Ignore comments */ }
+{MULTI_LINE}        { /* Ignore comments */ }
 
-{CHARACTER}         { printf("<Character, %s>\n", yytext); }
-{STRING}            { printf("<String, %s>\n", yytext); }
+{CHARACTER}         { yylval.character = yytext[1]; return CHARACTER; }
+{STRING}            { yylval.string = yytext; return STRING; }
 
-{SEA}               { printf("<Keyword, \"%s\">\n", yytext); }
-{CARACTER}          { printf("<Keyword, \"%s\">\n", yytext); }
-{BOOLEANO}          { printf("<Keyword, \"%s\">\n", yytext); }
-{ENTERO}            { printf("<Keyword, \"%s\">\n", yytext); }
-{FLOTANTE}          { printf("<Keyword, \"%s\">\n", yytext); }
-{DOBLE}             { printf("<Keyword, \"%s\">\n", yytext); }
-{CADENA}            { printf("<Keyword, \"%s\">\n", yytext); }
-{VACIO}             { printf("<Keyword, \"%s\">\n", yytext); }
-{FUNCION}           { printf("<Keyword, \"%s\">\n", yytext); }
-{CLASE}             { printf("<Keyword, \"%s\">\n", yytext); }
-{CIERTO}            { printf("<Keyword, \"%s\">\n", yytext); }
-{FALSO}             { printf("<Keyword, \"%s\">\n", yytext); }
-{SI}                { printf("<Keyword, \"%s\">\n", yytext); }
-{SINO}              { printf("<Keyword, \"%s\">\n", yytext); }
-{Y}                 { printf("<Keyword, \"%s\">\n", yytext); }
-{O}                 { printf("<Keyword, \"%s\">\n", yytext); }
-{POR}               { printf("<Keyword, \"%s\">\n", yytext); }
-{MIENTRAS}          { printf("<Keyword, \"%s\">\n", yytext); }
-{ESTA}              { printf("<Keyword, \"%s\">\n", yytext); }
-{EN}                { printf("<Keyword, \"%s\">\n", yytext); }
-{REGRESA}           { printf("<Keyword, \"%s\">\n", yytext); }
+{SEA}               { yylval.string = yytext; return SEA; }
+{CARACTER}          { yylval.string = yytext; return CARACTER; }
+{BOOLEANO}          { yylval.string = yytext; return BOOLEANO; }
+{ENTERO}            { yylval.string = yytext; return ENTERO; }
+{FLOTANTE}          { yylval.string = yytext; return FLOTANTE; }
+{CADENA}            { yylval.string = yytext; return CADENA; }
+{VACIO}             { yylval.string = yytext; return VACIO; }
+{FUNCION}           { yylval.string = yytext; return FUNCION; }
+{CLASE}             { yylval.string = yytext; return CLASE; }
+{CIERTO}            { yylval.string = yytext; return CIERTO; }
+{FALSO}             { yylval.string = yytext; return FALSO; }
+{SI}                { yylval.string = yytext; return SI; }
+{SINO}              { yylval.string = yytext; return SINO; }
+{Y}                 { yylval.string = yytext; return Y; }
+{O}                 { yylval.string = yytext; return O; }
+{POR}               { yylval.string = yytext; return POR; }
+{MIENTRAS}          { yylval.string = yytext; return MIENTRAS; }
+{ESTA}              { yylval.string = yytext; return ESTA; }
+{EN}                { yylval.string = yytext; return EN; }
+{REGRESA}           { yylval.string = yytext; return REGRESA; }
 
-{INTEGER}           { printf("<Integer, \"%s\">\n", yytext); }
-{REAL}              { printf("<Real, \"%s\">\n", yytext); }
+{INTEGER}           { yylval.integer = atoi(yytext); return INTEGER; }
+{REAL}              { yylval.real = atof(yytext); return REAL; }
 
-{WHITESPACE}        { }
+{WHITESPACE}        { /* Ignore whitespace */ }
 
-{IDENTIFIER}        { printf("<Identifier, \"%s\">\n", yytext); }
+"+"                 { return '+'; }
+"-"                 { return '-'; }
+"*"                 { return '*'; }
+"/"                 { return '/'; }
+"^"                 { return '^'; }
+"%"                 { return '%'; }
+"!"                 { return '!'; }
+"+="                { return PLUS_EQUAL; }
+"-="                { return MINUS_EQUAL; }
+"*="                { return TIMES_EQUAL; }
+"/="                { return DIVIDE_EQUAL; }
+"%="                { return MOD_EQUAL; }
+"="                 { return '='; }
+"=="                { return EQUAL; }
+"!="                { return NOT_EQUAL; }
+"<"                 { return '<'; }
+"<="                { return LE; }
+">"                 { return '>'; }
+">="                { return GE; }
+"->"                { return ARROW; }
+"("                 { return '('; }
+")"                 { return ')'; }
+"{"                 { return '{'; }
+"}"                 { return '}'; }
+"["                 { return '['; }
+"]"                 { return ']'; }
+";"                 { return ';'; }
+","                 { return ','; }
+"."                 { return '.'; }
+"..."               { return ELLIPSIS; }
+":"                 { return ':'; }
 
-"+"                 { printf("<Operator, \"%s\">\n", yytext); }
-"-"                 { printf("<Operator, \"%s\">\n", yytext); }
-"*"                 { printf("<Operator, \"%s\">\n", yytext); }
-"/"                 { printf("<Operator, \"%s\">\n", yytext); }
-"^"                 { printf("<Operator, \"%s\">\n", yytext); }
-"%"                 { printf("<Operator, \"%s\">\n", yytext); }
-"!"                 { printf("<Operator, \"%s\">\n", yytext); }
-"+="                { printf("<Operator, \"%s\">\n", yytext); }
-"-="                { printf("<Operator, \"%s\">\n", yytext); }
-"*="                { printf("<Operator, \"%s\">\n", yytext); }
-"/="                { printf("<Operator, \"%s\">\n", yytext); }
-"%="                { printf("<Operator, \"%s\">\n", yytext); }
-"="                 { printf("<Operator, \"%s\">\n", yytext); }
-"=="                { printf("<Operator, \"%s\">\n", yytext); }
-"!="                { printf("<Operator, \"%s\">\n", yytext); }
-"<"                 { printf("<Operator, \"%s\">\n", yytext); }
-"<="                { printf("<Operator, \"%s\">\n", yytext); }
-">"                 { printf("<Operator, \"%s\">\n", yytext); }
-">="                { printf("<Operator, \"%s\">\n", yytext); }
-"->"                { printf("<Operator, \"%s\">\n", yytext); }
-"("                 { printf("<Left Paren, \"%s\">\n", yytext); }
-")"                 { printf("<Right Paren, \"%s\">\n", yytext); }
-"{"                 { printf("<Left Brace, \"%s\">\n", yytext); }
-"}"                 { printf("<Right Brace, \"%s\">\n", yytext); }
-"["                 { printf("<Left Bracket, \"%s\">\n", yytext); }
-"]"                 { printf("<Right Bracket, \"%s\">\n", yytext); }
-";"                 { printf("<Semicolon, \"%s\">\n", yytext); }
-","                 { printf("<Comma, \"%s\">\n", yytext); }
-"."                 { printf("<Period, \"%s\">\n", yytext); }
-"..."               { printf("<Ellipsis, \"%s\">\n", yytext); }
-":"                 { printf("<Colon, \"%s\">\n", yytext); }
+{IDENTIFIER}        { yylval.string = yytext; return IDENTIFIER; }
 
-.                   { printf("Error: \"%s\"\n", yytext); return 1; }
+.                   { printf("Lexical error: unexpected character %s\n", yytext); }
 
 %%
